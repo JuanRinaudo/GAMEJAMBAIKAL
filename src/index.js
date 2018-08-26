@@ -1,15 +1,21 @@
+
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
     width: 800,
-    height: 600,
-    scene: {
-        preload: preload,
-        create: create
-    }
+    height: 600
 };
 
 var game = new Phaser.Game(config);
+game.scene.add('load', {
+        preload: preload,
+        create: create
+    });
+
+game.scene.add('play', play);
+
+game.scene.start('load');
+
 
 function preload ()
 {
@@ -25,8 +31,8 @@ function create ()
         y: 450,
         duration: 2000,
         ease: 'Power2',
-        yoyo: true,
-        loop: -1
-    });
-
+        //yoyo: true,
+        //loop: -1,
+        onComplete: function() { game.scene.switch("load", "play"); }//game.scene.start.bind(game.scene, "play")
+  });
 }
