@@ -1,6 +1,7 @@
 var ship;
 var playerProjectiles;
 var babaProjectiles;
+var monsterMinions;
 
 var playerHealth;
 var monsterHealth;
@@ -21,6 +22,7 @@ var looseSound;
 
 var shootTimer;
 var babaTimer;
+var monsterTimer;
 
 var SHIP_FIRERATE = 250;
 var SHIP_SPEED = 0.5;
@@ -33,11 +35,21 @@ var ENEMY_DAMAGE = 1;
 
 var BABA_SPAWN_BASE_TIME = 1000;
 var BABA_SPAWN_RANDOM_TIME = 500;
+var MONSTER_SPAWN_BASE_TIME = 2000;
+var MONSTER_SPAWN_RANDOM_TIME = 500;
+var MONSTER_END_SEEK_Y = 0;
+
+var BABA_SPEED = 0.75;
+var MINION_SPEED = 0.5;
+
+// var debug;
 
 var play = {
     preload: function () {
     },
     create: function () {
+        MONSTER_END_SEEK_Y = SCENE_HEIGHT * 0.5;
+
         //bg
         const divisions = 6;
         const colors = [0x1FC8DC, 0x1EBCCF]
@@ -91,10 +103,13 @@ var play = {
         playerUIHealth.fillStyle([0x00FF00]);
         playerUIHealth.fillRect(0, SCENE_HEIGHT - SCENE_HEIGHT * 0.05, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
 
-
         this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
 
         startSpawnBaba(this)
+        startSpawnMonster(this);
+
+        // debug = this.add.graphics(0, 0);
+        // debug.lineStyle(5, 0xFF00FF, 1.0);
     },
     update: function (time, deltaTime) {
         monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
@@ -113,17 +128,38 @@ var play = {
         for (var i = 0; i < playerProjectiles.children.size; i++) {
             var lazer = playerProjectiles.children.entries[i];
             lazer.y -= deltaTime * LAZER_SPEED;
+            if(lazer.y < -SCENE_HEIGHT * 2) {
+                destroyPlayerProjectile(lazer);
+            }
         }
 
         for (var i = 0; i < babaProjectiles.children.size; i++) {
             var enemy = babaProjectiles.children.entries[i];
-            enemy.y += deltaTime * 0.75;
+            enemy.y += deltaTime * BABA_SPEED;
+        }
+
+        for (var i = 0; i < monsterMinions.children.size; i++) {
+            var enemy = monsterMinions.children.entries[i];
+            if(enemy.y < MONSTER_END_SEEK_Y) {
+                enemy.angle = Phaser.Math.Angle.Between(ship.x, ship.y, enemy.x, enemy.y);
+            }
+            var dx = Math.cos(enemy.angle) * deltaTime * MINION_SPEED;
+            var dy = Math.sin(enemy.angle) * deltaTime * MINION_SPEED;
+            enemy.x -= dx;
+            enemy.y -= dy;
+            enemy.angle = (enemy.angle - Math.PI * 0.5) * Phaser.Math.RAD_TO_DEG;
         }
 
         babaTimer = Math.max(babaTimer - deltaTime, 0);
         if(babaTimer == 0) {
             babaTimer = getBabaSpawnTime();
-            spawnbaba(this);
+            spawnBaba(this);
+        }
+
+        monsterTimer = Math.max(monsterTimer - deltaTime, 0);
+        if(monsterTimer == 0) {
+            monsterTimer = getBabaSpawnTime();
+            spawnMonster(this);
         }
 
         if (monsterHealth <= 0) {
@@ -145,13 +181,16 @@ function fireLazer(context) {
 
 function onMonsterHit(monster, projectile) {
     monsterHealth--;
-    playerProjectiles.remove(projectile);
-    projectile.destroy();
+    destroyPlayerProjectile(projectile);
     if(!monsterScreamSound.isPlaying) {
         monsterScreamSound.play();
     }
 }
 
+function destroyPlayerProjectile(projectile) {
+    playerProjectiles.remove(projectile);
+    projectile.destroy();
+}
 
 function onProjectileHit(enemy, projectile) {
     playerProjectiles.remove(projectile);
@@ -191,18 +230,36 @@ function startSpawnBaba(scene) {
     babaTimer = getBabaSpawnTime();
 }
 
+function startSpawnMonster(scene) {
+    monsterMinions = scene.add.group();
+    scene.physics.add.overlap(ship, monsterMinions, onHeroHit);
+
+    monsterTimer = getMonsterSpawnTime();
+}
+
 function getBabaSpawnTime() {
     return Math.random() * BABA_SPAWN_RANDOM_TIME + BABA_SPAWN_BASE_TIME;
 }
 
-function spawnbaba(scene) {
+function getMonsterSpawnTime() {
+    return Math.random() * MONSTER_SPAWN_RANDOM_TIME + MONSTER_SPAWN_BASE_TIME;
+}
+
+function spawnBaba(scene) {
     var enemy = scene.physics.add.sprite(monster.x + Math.random() * 32 - 16, monster.y + monster.height / 2, "baba");
-    //SCALE
-    enemy.setScale(0.75)
     babaProjectiles.add(enemy);
-    // scene.physics.add.overlap(enemy, playerProjectiles, onProjectileHit);
 
     babaTimer = getBabaSpawnTime();
+}
+
+function spawnMonster(scene) {
+    var minion = scene.physics.add.sprite(monster.x + monster.width * (Math.random() * 0.6 - 0.3), monster.y + monster.height * (Math.random() * 0.6 - 0.3), "minion");
+    //SCALE
+    minion.setScale(0.75)
+    monsterMinions.add(minion);
+    scene.physics.add.overlap(minion, playerProjectiles, onProjectileHit);
+
+    monsterTimer = getMonsterSpawnTime();
 }
 
 function onHeroHit(ship, babaProjectile) {

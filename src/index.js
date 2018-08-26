@@ -42,7 +42,7 @@ function preload() {
     this.load.image('baba', 'assets/Baba.png');
 
     loadAudios(this, [
-        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto"
+        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto", "Motor movim", "Motor quieto"
     ]);
     for (var i = 1; i < 10; i++) {
         this.load.image('cloud' + i, 'assets/cloud' + i + '.png');
@@ -53,8 +53,8 @@ function loadAudios(context, audios) {
     for(var i = 0; i < audios.length; i++) {
         var audioName = audios[i];
         context.load.audio(audioName, [
-            'assets/'+ audioName +'.ogg',
-            'assets/'+ audioName + '.wav'
+            'assets/'+ audioName +'.ogg'//,
+            // 'assets/'+ audioName + '.wav'
         ]);        
     }
 }
