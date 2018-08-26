@@ -3,6 +3,10 @@ const SCENE_HEIGHT = 640;
 const TEXT_TIMEOUT = 50;
 const END_TIMEOUT = 2000;
 
+const CAN_RESTART_TIME = 500;
+
+var victory = false;
+
 var timerId;
 var config = {
     type: Phaser.AUTO,
@@ -28,7 +32,8 @@ game.scene.add('load', {
 
 game.scene.add('play', play);
 game.scene.add('gameover', {
-    create: createGameOver
+    create: createGameOver,
+    update: gameOverUpdate
 });
 
 game.scene.start('load');
@@ -109,9 +114,4 @@ function gameOver() {
     mainTheme.stop();
     game.scene.switch("play", "gameover");
     game.scene.stop("play");
-}
-
-function restartGame() {
-    game.scene.switch("gameover", "play");
-    game.scene.stop("gameover");
 }

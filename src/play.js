@@ -25,11 +25,11 @@ var shootTimer;
 var babaTimer;
 var monsterTimer;
 
-var SHIP_FIRERATE = 250;
+var SHIP_FIRERATE = 500;
 var SHIP_SPEED = 0.5;
 var LAZER_SPEED = 0.6;
 
-var MONSTER_HEALTH = 50;
+var MONSTER_HEALTH = 5;
 var PLAYER_HEALTH = 5;
 var LAZER_DAMAGE = 1;
 var ENEMY_DAMAGE = 1;
@@ -49,7 +49,7 @@ var play = {
     preload: function () {
     },
     create: function () {
-        MONSTER_END_SEEK_Y = SCENE_HEIGHT * 0.5;
+        MONSTER_END_SEEK_Y = SCENE_HEIGHT * 0.4;
 
         //bg
         const divisions = 6;
@@ -159,7 +159,9 @@ var play = {
             var dy = Math.sin(enemy.angle) * deltaTime * MINION_SPEED;
             enemy.x -= dx;
             enemy.y -= dy;
-            enemy.angle = (enemy.angle - Math.PI * 0.5) * Phaser.Math.RAD_TO_DEG;
+            if(enemy.y < MONSTER_END_SEEK_Y) {
+                enemy.angle = (enemy.angle - Math.PI * 0.5) * Phaser.Math.RAD_TO_DEG;
+            }
         }
 
         babaTimer = Math.max(babaTimer - deltaTime, 0);
@@ -175,10 +177,12 @@ var play = {
         }
 
         if (monsterHealth <= 0) {
+            victory = true;
             gameOver();
         }
 
         if (playerHealth <= 0) {
+            victory = false;
             gameOver();
         }
 
@@ -283,7 +287,7 @@ function onHeroHitBaba(ship, babaProjectile) {
 }
 
 function onHeroHitMonster(ship, minion) {
-    monsterMinions.remove(babaProjectile);
+    monsterMinions.remove(minion);
     minion.destroy()
     playerHealth -= ENEMY_DAMAGE;
 }
