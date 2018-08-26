@@ -179,8 +179,29 @@ function onHeroHit(ship, monsterProjectile) {
 }
 
 function addCloudsFX(scene) {
+    for (var i = 1; i < 10; i++) {
+        var y = (SCENE_HEIGHT / 5) * (Math.random() * 3 + 1)
 
 
+
+        var left = SCENE_WIDTH + 400 + SCENE_WIDTH * Math.random() * 0.5;
+        var right = - 400 - SCENE_WIDTH * Math.random() * 0.5;
+
+
+        var cloud = scene.add.image(i % 2 == 1 ? left : right, y, 'cloud' + i);
+
+
+
+        scene.tweens.add({
+            targets: cloud,
+            x: (i % 2 == 1) ? right : left,
+            duration: 15000 + 15000 * Math.random(),
+            ease: 'Linear',
+            yoyo: true,
+            loop: -1
+        });
+
+    }
 }
 
 //TODO 
