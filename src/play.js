@@ -12,11 +12,19 @@ var spaceBar;
 var left;
 var right;
 
-var shootTimer;
-var SHIP_FIRERATE = 100;
-var SHIP_SPEED = 0.5;
+var mainTheme;
+var monsterScreamSound;
+var lazerSound;
+var explosionSound;
+var winSound;
+var looseSound;
 
-var MONSTER_HEALTH = 50;
+var shootTimer;
+var SHIP_FIRERATE = 250;
+var SHIP_SPEED = 0.5;
+var LAZER_SPEED = 0.6;
+
+var MONSTER_HEALTH = 30;
 var PLAYER_HEALTH = 5;
 var LAZER_DAMAGE = 1;
 
@@ -38,13 +46,22 @@ var play = {
         }
         //end bg
 
+        mainTheme = this.sound.add('MainTheme');
+        mainTheme.loop = true;
+        mainTheme.play();
+        monsterScreamSound = this.sound.add('Rugido');
+        lazerSound = this.sound.add('Laser');
+        explosionSound = this.sound.add('Explosion');
+        winSound = this.sound.add('Winner');
+        looseSound = this.sound.add('Loser');
+
         console.log("Scene Play");
         var monster = this.physics.add.sprite(SCENE_WIDTH/2, 0, "monster");
         monster.y = monster.height/2;
         
         tweenMonster(monster,this)
 
-        ship = this.physics.add.sprite(game.canvas.width * 0.5, game.canvas.height - 64, 'ship');
+        ship = this.physics.add.sprite(game.canvas.width * 0.5, game.canvas.height - 48, 'ship');
         
         playerProjectiles = this.add.group();
         spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -64,12 +81,11 @@ var play = {
     update: function(time, deltaTime) {
         monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
 
+        shootTimer = Math.max(shootTimer - deltaTime, 0);
         if(spaceBar.isDown) {
-            shootTimer += deltaTime;
-            if(shootTimer > SHIP_FIRERATE) {
-                var lazer = this.physics.add.sprite(ship.x, ship.y, 'lazer');
-                playerProjectiles.add(lazer);
-                shootTimer = 0;
+            if(shootTimer == 0) {
+                fireLazer(this);
+                shootTimer = SHIP_FIRERATE;
             }
         }
         var speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
@@ -77,20 +93,30 @@ var play = {
 
         for(var i = 0; i < playerProjectiles.children.size; i++) {
             var lazer = playerProjectiles.children.entries[i];
-            lazer.y -= deltaTime;
+            lazer.y -= deltaTime * LAZER_SPEED;
         }
 
         if(monsterHealth <= 0) {
+            explosionSound.play();
+            mainTheme.stop();
             this.scene.restart();
         }
     }
+}
+
+function fireLazer(context) {
+    var lazer = context.physics.add.sprite(ship.x, ship.y, 'lazer');
+    playerProjectiles.add(lazer);
+    lazerSound.play();
 }
 
 function onMonsterHit(monster, projectile) {
     monsterHealth--;
     playerProjectiles.remove(projectile);
     projectile.destroy();
-    console.log(monsterHealth);
+    if(!monsterScreamSound.isPlaying) {
+        monsterScreamSound.play();
+    }
 }
 
 function tweenMonster(monster, scene) {

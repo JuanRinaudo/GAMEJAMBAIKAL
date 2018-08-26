@@ -17,6 +17,8 @@ var config = {
     }
 };
 
+var introTheme;
+
 var game = new Phaser.Game(config);
 game.scene.add('load', {
     preload: preload,
@@ -34,11 +36,31 @@ function preload() {
     this.load.image('lazer', 'assets/Lazer.png');
     this.load.image('ship', 'assets/Ship.png');
 
+    loadAudios(this, [
+        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme"
+    ]);
+}
+
+function loadAudios(context, audios) {
+    for(var i = 0; i < audios.length; i++) {
+        var audioName = audios[i];
+        context.load.audio(audioName, [
+            'assets/'+ audioName +'.ogg',
+            'assets/'+ audioName + '.wav'
+        ]);        
+    }
 }
 
 function create() {
+    introTheme = this.sound.add('IntroTheme');
+    introTheme.play();
+    
     var logo = this.add.image(game.canvas.width * 0.5, -game.canvas.height * 0.5, 'logo');
-    var fillText = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged."
+    var fillText = "En el año 2420, los niveles de contaminación del riachuelo alcanzaron niveles críticos, y el gobierno del presidente Menem tercero declaró estado de emergencia regional.\n" +
+    "A partir de ese día, la ciudad permaneció en cuarentena.\n" +
+    "Varias décadas más tarde, estudios científicos y expediciones al epicentro de la catástrofe probaron lo increíble. Insectos que consumían el agua contaminada a diario sufrieron cambios en su estructura y evolucionaron en monstruos hambrientos de carne humana.\n" +
+    "Los únicos que pueden defendernos son del Regimiento Armado Insecticida del Delta (R.A.I.D.).\n" +
+    "El futuro de la argentinidad es aún incierto...\n";
 
     var PADDING = 5;
     var style = { font: 'bold 15pt Arial', fill: 'white', align: 'left', wordWrap: { width: SCENE_WIDTH - PADDING * 2, useAdvancedWrap: false } };
@@ -60,5 +82,6 @@ function addText(textFill, fillText) {
 
 
 function changeState() {
+    introTheme.stop();
     game.scene.switch("load", "play");
 }
