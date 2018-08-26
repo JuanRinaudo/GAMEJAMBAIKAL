@@ -139,10 +139,7 @@ var play = {
         if (timestamp - lastMonsterRotation >= (2000 + 2000 * Math.random())) {
             rotateMonster(this);
             lastMonsterRotation = timestamp
-
         }
-
-
 
         for (var i = 0; i < playerProjectiles.children.size; i++) {
             var lazer = playerProjectiles.children.entries[i];
@@ -324,9 +321,10 @@ function rotateMonster(scene) {
 
     scene.tweens.add({
         targets: monster,
-        angle: (Math.random()>0.5? "-" : "+") + "30",
-        duration: 200,
+        angle: monster.angle + (Math.random() >= 0.5? -15: 15),
+        duration: 25,
         ease: 'Linear',
-        yoyo: true
+        yoyo: true,
+        loop:3
     });
 }
