@@ -5,14 +5,21 @@ var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
     width: SCENE_WIDTH,
-    height: SCENE_HEIGHT
+    height: SCENE_HEIGHT,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: true
+        }
+    }
 };
 
 var game = new Phaser.Game(config);
 game.scene.add('load', {
-        preload: preload,
-        create: create
-    });
+    preload: preload,
+    create: create,
+});
 
 game.scene.add('play', play);
 
