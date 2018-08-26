@@ -23,7 +23,11 @@ var play = {
         console.log("Scene Play");
         var monster = this.add.sprite(SCENE_WIDTH/2, 0, "monster");
         monster.y = monster.height/2;
+        
+        tweenMonster(monster,this)
 
+
+        
         ship = this.add.image(game.canvas.width * 0.5, game.canvas.height - 64, 'ship');
     },
     update: function() {
@@ -35,3 +39,26 @@ var play = {
     }
 }
 
+
+function tweenMonster(monster, scene) {
+    
+    //var time = 1000;
+    var velFactor = 4;
+    
+    var direction = ((monster.x > SCENE_WIDTH/2 ) ? -1 : 1)
+    var distance =  direction * (Math.random() * SCENE_WIDTH * 0.25) + (direction * SCENE_WIDTH *.1);
+    
+    //to change vel use constraint time.
+    var time = Math.abs(distance) * velFactor;
+    
+    scene.tweens.add({
+            targets: monster,
+            x: monster.x + distance,
+            duration: time,
+            ease: 'Linear',
+            onComplete: function() { 
+                tweenMonster(monster, scene); 
+            }
+        });
+}
+    
