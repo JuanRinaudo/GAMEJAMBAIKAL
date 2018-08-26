@@ -8,6 +8,7 @@ var monsterHealth;
 
 var monsterUIHealth;
 var playerUIHealth;
+var lastMonsterHit;
 
 var spaceBar;
 var left;
@@ -125,6 +126,17 @@ var play = {
         var speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
         ship.x = Math.min(Math.max(ship.x + speed, 32), SCENE_WIDTH - 32);
 
+
+        if (Date.now() - lastMonsterHit < 300 ) {
+            
+            monster.tint = Math.random() * 0xFFFFFF;
+
+        } else if(monster.tint != 0) {
+            monster.tint = 0xFFFFFF;
+        }
+
+
+
         for (var i = 0; i < playerProjectiles.children.size; i++) {
             var lazer = playerProjectiles.children.entries[i];
             lazer.y -= deltaTime * LAZER_SPEED;
@@ -190,6 +202,8 @@ function onMonsterHit(monster, projectile) {
 function destroyPlayerProjectile(projectile) {
     playerProjectiles.remove(projectile);
     projectile.destroy();
+
+    lastMonsterHit = Date.now()
 }
 
 function onProjectileHit(enemy, projectile) {
@@ -225,14 +239,14 @@ function tweenMonster(monster, scene) {
 
 function startSpawnBaba(scene) {
     babaProjectiles = scene.add.group();
-    scene.physics.add.overlap(ship, babaProjectiles, onHeroHit);
+    scene.physics.add.overlap(ship, babaProjectiles, onHeroHitBaba);
 
     babaTimer = getBabaSpawnTime();
 }
 
 function startSpawnMonster(scene) {
     monsterMinions = scene.add.group();
-    scene.physics.add.overlap(ship, monsterMinions, onHeroHit);
+    scene.physics.add.overlap(ship, monsterMinions, onHeroHitMonster);
 
     monsterTimer = getMonsterSpawnTime();
 }
@@ -262,16 +276,41 @@ function spawnMonster(scene) {
     monsterTimer = getMonsterSpawnTime();
 }
 
-function onHeroHit(ship, babaProjectile) {
+function onHeroHitBaba(ship, babaProjectile) {
     babaProjectiles.remove(babaProjectile);
-
     babaProjectile.destroy()
     playerHealth -= ENEMY_DAMAGE;
 }
 
+function onHeroHitMonster(ship, minion) {
+    monsterMinions.remove(babaProjectile);
+    minion.destroy()
+    playerHealth -= ENEMY_DAMAGE;
+}
+
 function addCloudsFX(scene) {
+    for (var i = 1; i < 10; i++) {
+        var y = (SCENE_HEIGHT / 5) * (Math.random() * 3 + 1)
+
+        //vel = 10 * distance
+        var randomOffset = 400 * Math.random() + SCENE_WIDTH * Math.random() * 0.5;
+        var rightPos = SCENE_WIDTH + randomOffset + i * 500;
+        var leftPos = -randomOffset - 100 - i * 500;
+
+        var distance = Math.abs(Math.abs(rightPos) + Math.abs(leftPos));
+        var cloud = scene.add.image(i % 2 == 1 ? rightPos : leftPos, y, 'cloud' + i);
 
 
+        scene.tweens.add({
+            targets: cloud,
+            x: (i % 2 == 1) ? leftPos : rightPos,
+            duration: 10 * distance,
+            ease: 'Linear',
+            yoyo: true,
+            loop: -1
+        });
+
+    }
 }
 
 //TODO 
