@@ -47,7 +47,7 @@ function preload() {
     this.load.image('baba', 'assets/Baba.png');
 
     loadAudios(this, [
-        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto", "Motor movim", "Motor quieto"
+        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto", "Motor movim loop", "Motor quieto"
     ]);
     for (var i = 1; i < 10; i++) {
         this.load.image('cloud' + i, 'assets/cloud' + i + '.png');
