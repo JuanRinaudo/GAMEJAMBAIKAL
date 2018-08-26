@@ -8,6 +8,7 @@ var monsterHealth;
 
 var monsterUIHealth;
 var playerUIHealth;
+var lastMonsterHit;
 
 var spaceBar;
 var left;
@@ -91,6 +92,17 @@ var play = {
         var speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
         ship.x = Math.min(Math.max(ship.x + speed, 32), SCENE_WIDTH - 32);
 
+
+        if (Date.now() - lastMonsterHit < 300 ) {
+            
+            monster.tint = Math.random() * 0xFFFFFF;
+
+        } else if(monster.tint != 0) {
+            monster.tint = 0xFFFFFF;
+        }
+
+
+
         for (var i = 0; i < playerProjectiles.children.size; i++) {
             var lazer = playerProjectiles.children.entries[i];
             lazer.y -= deltaTime;
@@ -118,6 +130,9 @@ function onMonsterHit(monster, projectile) {
     monsterHealth--;
     playerProjectiles.remove(projectile);
     projectile.destroy();
+
+    lastMonsterHit = Date.now()
+
     console.log(monsterHealth);
 }
 
@@ -175,7 +190,6 @@ function onHeroHit(ship, monsterProjectile) {
 
     monsterProjectile.destroy()
     playerHealth -= 5;
-    console.log("GAME OVER");
 }
 
 function addCloudsFX(scene) {
@@ -183,9 +197,9 @@ function addCloudsFX(scene) {
         var y = (SCENE_HEIGHT / 5) * (Math.random() * 3 + 1)
 
         //vel = 10 * distance
-        var randomOffset = 400 * Math.random()  + SCENE_WIDTH * Math.random() * 0.5;
-        var rightPos = SCENE_WIDTH + randomOffset +  i * 500;
-        var leftPos = -randomOffset  -100 - i* 500;
+        var randomOffset = 400 * Math.random() + SCENE_WIDTH * Math.random() * 0.5;
+        var rightPos = SCENE_WIDTH + randomOffset + i * 500;
+        var leftPos = -randomOffset - 100 - i * 500;
 
         var distance = Math.abs(Math.abs(rightPos) + Math.abs(leftPos));
         var cloud = scene.add.image(i % 2 == 1 ? rightPos : leftPos, y, 'cloud' + i);
