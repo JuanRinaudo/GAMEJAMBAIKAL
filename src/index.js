@@ -1,5 +1,5 @@
-const SCENE_WIDTH = 800;
-const SCENE_HEIGHT = 600;
+const SCENE_WIDTH = 540;
+const SCENE_HEIGHT = 640;
 
 var config = {
     type: Phaser.AUTO,
@@ -30,15 +30,13 @@ function preload ()
 
 function create ()
 {
-    var logo = this.add.image(400, 150, 'logo');
+    var logo = this.add.image(game.canvas.width * 0.5, -game.canvas.height * 0.5, 'logo');
 
     this.tweens.add({
         targets: logo,
-        y: 450,
-        duration: 2000,
+        y: game.canvas.height * 0.5,
+        duration: 1000,
         ease: 'Power2',
-        //yoyo: true,
-        //loop: -1,
         onComplete: function() { game.scene.switch("load", "play"); }//game.scene.start.bind(game.scene, "play")
   });
 }
