@@ -184,5 +184,4 @@ function addCloudsFX(scene) {
 }
 
 //TODO 
-//Player health bar
 //enemies spawn pattern
