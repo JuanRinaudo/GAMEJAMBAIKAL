@@ -25,6 +25,9 @@ game.scene.add('load', {
 });
 
 game.scene.add('play', play);
+game.scene.add('gameover', {
+    create: createGameOver
+});
 
 game.scene.start('load');
 
@@ -37,7 +40,6 @@ function preload() {
 }
 
 function create() {
-    var logo = this.add.image(game.canvas.width * 0.5, -game.canvas.height * 0.5, 'logo');
     var fillText = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged."
 
     var PADDING = 5;
@@ -72,4 +74,14 @@ function addText(textFill, fillText) {
 function changeState() {
     clearTimeout(timerId)
     game.scene.switch("load", "play");
+}
+
+
+function gameOver(){
+    game.scene.switch("play", "gameover");
+}
+
+
+function restartGame(){
+    game.scene.switch("gameover", "play");
 }

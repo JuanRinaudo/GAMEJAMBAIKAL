@@ -18,7 +18,7 @@ var SHIP_FIRERATE = 100;
 var SHIP_SPEED = 0.5;
 
 var MONSTER_HEALTH = 50;
-var PLAYER_HEALTH = 5;
+var PLAYER_HEALTH = 30;
 var LAZER_DAMAGE = 1;
 
 var play = {
@@ -85,7 +85,7 @@ var play = {
             lazer.y -= deltaTime;
         }
 
-        
+
         for (var i = 0; i < monsterProjectiles.children.size; i++) {
             var enemy = monsterProjectiles.children.entries[i];
             enemy.y += deltaTime * 0.75;
@@ -95,6 +95,11 @@ var play = {
             this.scene.restart();
             clearTimeout(monsterSpawnerID);
         }
+
+        if (playerHealth <= 0) {
+            gameOver();
+        }
+
     }
 }
 
@@ -109,7 +114,7 @@ function onMonsterHit(monster, projectile) {
 function onProjectileHit(enemy, projectile) {
     playerProjectiles.remove(projectile);
     projectile.destroy();
-    
+
     monsterProjectiles.remove(enemy);
     enemy.destroy();
 }
@@ -140,7 +145,7 @@ function tweenMonster(monster, scene) {
 function startSpawnMonster(scene) {
     monsterProjectiles = scene.add.group();
     scene.physics.add.overlap(ship, monsterProjectiles, onHeroHit);
-    
+
     spawnMonster(scene);
 }
 
@@ -154,7 +159,10 @@ function spawnMonster(scene) {
     monsterSpawnerID = setTimeout(spawnMonster.bind(this, scene), Math.random() * 1000 + 500);
 }
 
-function onHeroHit() {
+function onHeroHit(ship, monsterProjectile) {
+    monsterProjectiles.remove(monsterProjectile);
+
+    monsterProjectile.destroy()
     playerHealth -= 5;
     console.log("GAME OVER");
 }
