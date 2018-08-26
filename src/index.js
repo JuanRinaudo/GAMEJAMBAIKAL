@@ -84,6 +84,9 @@ function create() {
     addText(text, fillText);
 
     this.input.keyboard.on("keydown", changeState);
+
+
+    
 }
 
 
