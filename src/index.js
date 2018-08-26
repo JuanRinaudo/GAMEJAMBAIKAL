@@ -1,7 +1,7 @@
 const SCENE_WIDTH = 540;
 const SCENE_HEIGHT = 640;
 const TEXT_TIMEOUT = 50;
-const END_TIMEOUT = 100;
+const END_TIMEOUT = 2000;
 
 var config = {
     type: Phaser.AUTO,
