@@ -9,6 +9,7 @@ var monsterHealth;
 var monsterUIHealth;
 var playerUIHealth;
 var lastMonsterHit;
+var lastMonsterRotation;
 
 var spaceBar;
 var left;
@@ -50,7 +51,7 @@ var play = {
     },
     create: function () {
         MONSTER_END_SEEK_Y = SCENE_HEIGHT * 0.5;
-
+        lastMonsterRotation = Date.now();
         //bg
         const divisions = 6;
         const colors = [0x1FC8DC, 0x1EBCCF]
@@ -126,13 +127,19 @@ var play = {
         var speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
         ship.x = Math.min(Math.max(ship.x + speed, 32), SCENE_WIDTH - 32);
 
+        var timestamp = Date.now()
+        if (timestamp - lastMonsterHit < 300) {
 
-        if (Date.now() - lastMonsterHit < 300 ) {
-            
             monster.tint = Math.random() * 0xFFFFFF;
 
-        } else if(monster.tint != 0) {
+        } else if (monster.tint != 0) {
             monster.tint = 0xFFFFFF;
+        }
+
+        if (timestamp - lastMonsterRotation >= (2000 + 2000 * Math.random())) {
+            rotateMonster(this);
+            lastMonsterRotation = timestamp
+
         }
 
 
@@ -313,5 +320,13 @@ function addCloudsFX(scene) {
     }
 }
 
-//TODO 
-//enemies spawn pattern
+function rotateMonster(scene) {
+
+    scene.tweens.add({
+        targets: monster,
+        angle: (Math.random()>0.5? "-" : "+") + "30",
+        duration: 200,
+        ease: 'Linear',
+        yoyo: true
+    });
+}
