@@ -2,6 +2,8 @@ var ship;
 var playerProjectiles;
 var babaProjectiles;
 var monsterMinions;
+var emitter0, emitter1;
+var explosionEmitter;
 
 var playerHealth;
 var monsterHealth;
@@ -47,7 +49,7 @@ var SHIP_FIRERATE = 500;
 var SHIP_SPEED = 0.5;
 var LAZER_SPEED = 0.6;
 
-var MONSTER_HEALTH = 40;
+var MONSTER_HEALTH = 5;
 var PLAYER_HEALTH = 5;
 var LAZER_DAMAGE = 1;
 var ENEMY_DAMAGE = 1;
@@ -72,6 +74,10 @@ var MONSTER_START_TIME = 800;
 
 var play = {
     preload: function () {
+        this.load.image('spark0', 'assets/blue.png');
+        this.load.image('spark1', 'assets/red.png');
+        this.load.image('explosion', 'assets/explosion00.png');
+
     },
     create: function () {
         MONSTER_END_SEEK_Y = SCENE_HEIGHT * 0.4;
@@ -153,6 +159,45 @@ var play = {
 
         // debug = this.add.graphics(0, 0);
         // debug.lineStyle(5, 0xFF00FF, 1.0);
+        emitter0 = this.add.particles('spark0').createEmitter({
+            x: 400,
+            y: 300,
+            speed: { min: -800, max: 800 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.55, end: 0 },
+            blendMode: 'SCREEN',
+            active: false,
+            lifespan: 700,
+            gravityY: 800
+        });
+
+        emitter1 = this.add.particles('spark1').createEmitter({
+            x: 400,
+            y: 300,
+            speed: { min: -800, max: 800 },
+            angle: { min: 0, max: 360 },
+            scale: { start: 0.35, end: 0 },
+            blendMode: 'SCREEN',
+            active: false,
+            lifespan: 400,
+            gravityY: 800
+        });
+        
+        explosionEmitter = this.add.particles('explosion').createEmitter({
+            alpha: { start: 1, end: 0 },
+            scale: { start: 0.5, end: 3.5 },
+            speed: 20,
+            accelerationY: -300,
+            angle: { min: -85, max: -95 },
+            rotate: { min: -180, max: 180 },
+            lifespan: { min: 1000, max: 1100 },
+            blendMode: 'ADD',
+            quantity: 30,
+            active: false,
+            x: 400,
+            y: 300
+        });
+
     },
     update: function (time, deltaTime) {
         if(!runningAnimation) {
@@ -253,13 +298,23 @@ var play = {
 
             if (monsterHealth <= 0) {
                 victory = true;
-                gameOver();
+                explosionEmitter.setPosition(monster.x, monster.y);
+                explosionEmitter.active = true;
+                explosionEmitter.explode();
+                runningAnimation = true;
+                this.tweens.killAll();
+                setTimeout(gameOver, 500);
             }
 
             if (playerHealth <= 0) {
                 victory = false;
                 gameOver();
             }
+        }
+        if (ship) {
+            emitter0.setPosition(ship.x, ship.y);
+            emitter1.setPosition(ship.x, ship.y);
+
         }
     }
 }
@@ -421,13 +476,24 @@ function spawnMonster(scene) {
 
 function onHeroHitBaba(ship, babaProjectile) {
     babaProjectiles.remove(babaProjectile);
-    babaProjectile.destroy()
-    playerHealth -= ENEMY_DAMAGE;
+    babaProjectile.destroy();
+    onHeroHitted();
+}
+
+function onHeroHitted(multiplier = 1) {
+
+    playerHealth -= ENEMY_DAMAGE * multiplier;
+    emitter0.active = true;
+    emitter1.active = true;
+    emitter0.explode();
+    emitter1.explode();
+
 }
 
 function onHeroHitMonster(ship, minion) {
     destroyMinion(minion);
     playerHealth -= ENEMY_DAMAGE;
+    onHeroHitted();
 }
 
 function destroyMinion(minion) {
@@ -476,8 +542,10 @@ function rotateMonster(scene) {
 function onMonsterCatch(monster, ship) {
     var time = Date.now();
     if (time - damageTimeout > 500) {
-        playerHealth -= ENEMY_DAMAGE * 2;
+
         damageTimeout = time;
+
+        onHeroHitted(2);
     }
 }
 
