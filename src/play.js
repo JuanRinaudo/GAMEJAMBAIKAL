@@ -5,6 +5,7 @@ var monsterMinions;
 
 var playerHealth;
 var monsterHealth;
+var damageTimeout = 0;
 
 var monsterUIHealth;
 var playerUIHealth;
@@ -78,6 +79,7 @@ var play = {
 
         //add clouds
 
+        monsterUIHealth = this.add.graphics(0, 0);
 
         console.log("Scene Play");
         monster = this.physics.add.sprite(SCENE_WIDTH / 2, 0, "monster");
@@ -97,15 +99,16 @@ var play = {
         monsterHealth = MONSTER_HEALTH;
         playerHealth = PLAYER_HEALTH;
 
-        monsterUIHealth = this.add.graphics(0, 0);
         monsterUIHealth.fillStyle([0xFF0000]);
-        monsterUIHealth.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
+        monsterUIHealth.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT * 0.025);
 
         playerUIHealth = this.add.graphics(0, 0);
         playerUIHealth.fillStyle([0x00FF00]);
-        playerUIHealth.fillRect(0, SCENE_HEIGHT - SCENE_HEIGHT * 0.05, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
+        playerUIHealth.fillRect(0, SCENE_HEIGHT - SCENE_HEIGHT * 0.025, SCENE_WIDTH, SCENE_HEIGHT * 0.025);
 
         this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
+        this.physics.add.overlap(monster, ship, onMonsterCatch);
+
 
         startSpawnBaba(this)
         startSpawnMonster(this);
@@ -118,8 +121,8 @@ var play = {
         playerUIHealth.scaleX = playerHealth / PLAYER_HEALTH;
 
         shootTimer = Math.max(shootTimer - deltaTime, 0);
-        if(spaceBar.isDown) {
-            if(shootTimer == 0) {
+        if (spaceBar.isDown) {
+            if (shootTimer == 0) {
                 fireLazer(this);
                 shootTimer = SHIP_FIRERATE;
             }
@@ -144,7 +147,7 @@ var play = {
         for (var i = 0; i < playerProjectiles.children.size; i++) {
             var lazer = playerProjectiles.children.entries[i];
             lazer.y -= deltaTime * LAZER_SPEED;
-            if(lazer.y < -SCENE_HEIGHT * 2) {
+            if (lazer.y < -SCENE_HEIGHT * 2) {
                 destroyPlayerProjectile(lazer);
             }
         }
@@ -156,7 +159,7 @@ var play = {
 
         for (var i = 0; i < monsterMinions.children.size; i++) {
             var enemy = monsterMinions.children.entries[i];
-            if(enemy.y < MONSTER_END_SEEK_Y) {
+            if (enemy.y < MONSTER_END_SEEK_Y) {
                 enemy.angle = Phaser.Math.Angle.Between(ship.x, ship.y, enemy.x, enemy.y);
             }
             var dx = Math.cos(enemy.angle) * deltaTime * MINION_SPEED;
@@ -167,13 +170,13 @@ var play = {
         }
 
         babaTimer = Math.max(babaTimer - deltaTime, 0);
-        if(babaTimer == 0) {
+        if (babaTimer == 0) {
             babaTimer = getBabaSpawnTime();
             spawnBaba(this);
         }
 
         monsterTimer = Math.max(monsterTimer - deltaTime, 0);
-        if(monsterTimer == 0) {
+        if (monsterTimer == 0) {
             monsterTimer = getBabaSpawnTime();
             spawnMonster(this);
         }
@@ -198,7 +201,7 @@ function fireLazer(context) {
 function onMonsterHit(monster, projectile) {
     monsterHealth--;
     destroyPlayerProjectile(projectile);
-    if(!monsterScreamSound.isPlaying) {
+    if (!monsterScreamSound.isPlaying) {
         monsterScreamSound.play();
     }
 }
@@ -218,6 +221,33 @@ function onProjectileHit(enemy, projectile) {
     enemy.destroy();
 }
 
+function moveDownMonster(monster, scene, onComplete) {
+
+    scene.tweens.timeline({
+        targets: monster,
+        onComplete: onComplete,
+        tweens: [
+            {
+                ease: 'Linear',
+                duration: 500,
+                y: 0
+            },
+            {
+                duration: 700,
+                ease: 'Power2',
+                y: SCENE_HEIGHT * 0.8
+            }, {
+                duration: 1000,
+                ease: 'Linear',
+                y: monster.height / 2
+            }
+        ]
+
+    });
+
+
+}
+
 function tweenMonster(monster, scene) {
 
     //var time = 1000;
@@ -235,7 +265,12 @@ function tweenMonster(monster, scene) {
         duration: time,
         ease: 'Linear',
         onComplete: function () {
-            tweenMonster(monster, scene);
+
+            if (Math.random() * 20 > 2) {
+                tweenMonster(monster, scene);
+            } else {
+                moveDownMonster(monster, scene, tweenMonster.bind(this, monster, scene));
+            }
         }
     });
 }
@@ -287,7 +322,7 @@ function onHeroHitBaba(ship, babaProjectile) {
 }
 
 function onHeroHitMonster(ship, minion) {
-    monsterMinions.remove(babaProjectile);
+    monsterMinions.remove(minion);
     minion.destroy()
     playerHealth -= ENEMY_DAMAGE;
 }
@@ -321,10 +356,19 @@ function rotateMonster(scene) {
 
     scene.tweens.add({
         targets: monster,
-        angle: monster.angle + (Math.random() >= 0.5? -15: 15),
+        angle: monster.angle + (Math.random() >= 0.5 ? -15 : 15),
         duration: 25,
         ease: 'Linear',
         yoyo: true,
-        loop:3
+        loop: 3
     });
+}
+
+
+function onMonsterCatch(monster, ship) {
+    var time = Date.now();
+    if (time - damageTimeout > 500) {
+        playerHealth -= ENEMY_DAMAGE * 2;
+        damageTimeout = time;
+    }
 }
