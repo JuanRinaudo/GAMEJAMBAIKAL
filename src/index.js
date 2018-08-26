@@ -42,6 +42,9 @@ function preload() {
     loadAudios(this, [
         "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme"
     ]);
+    for (var i = 1; i < 10; i++) {
+        this.load.image('cloud' + i, 'assets/cloud' + i + '.png');
+    }
 }
 
 function loadAudios(context, audios) {
@@ -100,12 +103,12 @@ function changeState() {
     game.scene.stop("load");
 }
 
-function gameOver(){
+function gameOver() {
     game.scene.switch("play", "gameover");
     game.scene.stop("play");
 }
 
-function restartGame(){
+function restartGame() {
     game.scene.switch("gameover", "play");
     game.scene.stop("gameover");
 }
