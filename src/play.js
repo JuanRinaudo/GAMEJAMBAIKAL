@@ -161,11 +161,11 @@ function startSpawnMonster(scene) {
 }
 
 function spawnMonster(scene) {
-    var enemy = scene.physics.add.sprite(monster.x, monster.y + monster.height / 2, "monster");
+    var monsterProjectile = scene.physics.add.sprite(monster.x, monster.y + monster.height / 2, "monster");
     //SCALE
-    enemy.setScale(0.2)
-    monsterProjectiles.add(enemy);
-    scene.physics.add.overlap(enemy, playerProjectiles, onProjectileHit);
+    monsterProjectile.setScale(0.2)
+    monsterProjectiles.add(monsterProjectile);
+    scene.physics.add.overlap(monsterProjectile, playerProjectiles, onProjectileHit);
 
     monsterSpawnerID = setTimeout(spawnMonster.bind(this, scene), Math.random() * 1000 + 500);
 }
