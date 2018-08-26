@@ -13,7 +13,6 @@ var left;
 var right;
 
 var monster;
-var enemies;
 var shootTimer;
 var SHIP_FIRERATE = 100;
 var SHIP_SPEED = 0.5;
@@ -65,7 +64,6 @@ var play = {
 
         this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
 
-
         startSpawnMonster(this)
     },
     update: function (time, deltaTime) {
@@ -88,8 +86,8 @@ var play = {
         }
 
         
-        for (var i = 0; i < enemies.children.size; i++) {
-            var enemy = enemies.children.entries[i];
+        for (var i = 0; i < monsterProjectiles.children.size; i++) {
+            var enemy = monsterProjectiles.children.entries[i];
             enemy.y += deltaTime * 0.75;
         }
 
@@ -105,6 +103,15 @@ function onMonsterHit(monster, projectile) {
     playerProjectiles.remove(projectile);
     projectile.destroy();
     console.log(monsterHealth);
+}
+
+
+function onProjectileHit(enemy, projectile) {
+    playerProjectiles.remove(projectile);
+    projectile.destroy();
+    
+    monsterProjectiles.remove(enemy);
+    enemy.destroy();
 }
 
 function tweenMonster(monster, scene) {
@@ -131,9 +138,9 @@ function tweenMonster(monster, scene) {
 
 
 function startSpawnMonster(scene) {
-    enemies = scene.add.group();
-    scene.physics.add.overlap(ship, enemies, onHeroHit);
-
+    monsterProjectiles = scene.add.group();
+    scene.physics.add.overlap(ship, monsterProjectiles, onHeroHit);
+    
     spawnMonster(scene);
 }
 
@@ -141,12 +148,18 @@ function spawnMonster(scene) {
     var enemy = scene.physics.add.sprite(monster.x, monster.y + monster.height / 2, "monster");
     //SCALE
     enemy.setScale(0.2)
-    enemies.add(enemy);
+    monsterProjectiles.add(enemy);
+    scene.physics.add.overlap(enemy, playerProjectiles, onProjectileHit);
 
     monsterSpawnerID = setTimeout(spawnMonster.bind(this, scene), Math.random() * 1000 + 500);
 }
 
 function onHeroHit() {
-    
+    playerHealth -= 5;
     console.log("GAME OVER");
 }
+
+
+//TODO 
+//Player health
+//enemies spawn pattern
