@@ -1,6 +1,24 @@
 
 var ship;
-var lazers = [];
+var playerProjectiles;
+var monsterProjectiles;
+
+var playerHealth;
+var monsterHealth;
+
+var monsterUIHealth;
+
+var spaceBar;
+var left;
+var right;
+
+var shootTimer;
+var SHIP_FIRERATE = 100;
+var SHIP_SPEED = 0.5;
+
+var MONSTER_HEALTH = 50;
+var PLAYER_HEALTH = 5;
+var LAZER_DAMAGE = 1;
 
 var play = {
     preload: function () {
@@ -21,24 +39,59 @@ var play = {
         //end bg
 
         console.log("Scene Play");
-        var monster = this.add.sprite(SCENE_WIDTH/2, 0, "monster");
+        var monster = this.physics.add.sprite(SCENE_WIDTH/2, 0, "monster");
         monster.y = monster.height/2;
         
         tweenMonster(monster,this)
 
-
+        ship = this.physics.add.sprite(game.canvas.width * 0.5, game.canvas.height - 64, 'ship');
         
-        ship = this.add.image(game.canvas.width * 0.5, game.canvas.height - 64, 'ship');
+        playerProjectiles = this.add.group();
+        spaceBar = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
+        right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
+
+        shootTimer = 0;
+        monsterHealth = MONSTER_HEALTH;
+        playerHealth = PLAYER_HEALTH;
+
+        monsterUIHealth = this.add.graphics(0, 0);
+        monsterUIHealth.fillStyle([0xFF0000]);
+        monsterUIHealth.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
+
+        this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
     },
-    update: function() {
-        
-        // lazers = this.add.image(400, 150, 'logo');
-        if(true) {
+    update: function(time, deltaTime) {
+        monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
 
+        if(spaceBar.isDown) {
+            shootTimer += deltaTime;
+            if(shootTimer > SHIP_FIRERATE) {
+                var lazer = this.physics.add.sprite(ship.x, ship.y, 'lazer');
+                playerProjectiles.add(lazer);
+                shootTimer = 0;
+            }
+        }
+        var speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
+        ship.x = Math.min(Math.max(ship.x + speed, 32), SCENE_WIDTH - 32);
+
+        for(var i = 0; i < playerProjectiles.children.size; i++) {
+            var lazer = playerProjectiles.children.entries[i];
+            lazer.y -= deltaTime;
+        }
+
+        if(monsterHealth <= 0) {
+            this.scene.restart();
         }
     }
 }
 
+function onMonsterHit(monster, projectile) {
+    monsterHealth--;
+    playerProjectiles.remove(projectile);
+    projectile.destroy();
+    console.log(monsterHealth);
+}
 
 function tweenMonster(monster, scene) {
     
