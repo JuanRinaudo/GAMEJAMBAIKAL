@@ -5,6 +5,7 @@ var monsterMinions;
 
 var playerHealth;
 var monsterHealth;
+var damageTimeout = 0;
 
 var monsterUIHealth;
 var playerUIHealth;
@@ -15,6 +16,8 @@ var spaceBar;
 var left;
 var right;
 
+var speed;
+
 var mainTheme;
 var monsterScreamSound;
 var lazerSound;
@@ -22,7 +25,9 @@ var explosionSound;
 var winSound;
 var looseSound;
 var babaSound;
-var bichosSound;
+var minionSound;
+var lazerHitSound;
+var chargeHitSound;
 
 var motorIdleSound;
 var motorMovementSound;
@@ -33,6 +38,10 @@ var monsterTimer;
 
 var ultimateTimer;
 var ultimateCount;
+
+var charging;
+
+var runningAnimation;
 
 var SHIP_FIRERATE = 500;
 var SHIP_SPEED = 0.5;
@@ -55,6 +64,9 @@ var ULTIMATE_MINION_COUNT = 5;
 
 var BABA_SPEED = 0.75;
 var MINION_SPEED = 0.5;
+
+var MONSTER_START_Y = -300;
+var MONSTER_START_TIME = 800;
 
 // var debug;
 
@@ -94,15 +106,16 @@ var play = {
         motorIdleSound.loop = true;
         motorMovementSound = this.sound.add('Motor movim loop');
         motorMovementSound.loop = true;
+        lazerHitSound = this.sound.add('Impacto');
+        chargeHitSound = this.sound.add('ataque carga');
         
         //add clouds
 
+        monsterUIHealth = this.add.graphics(0, 0);
 
         console.log("Scene Play");
         monster = this.physics.add.sprite(SCENE_WIDTH / 2, 0, "monster");
         monster.y = monster.height / 2;
-
-        tweenMonster(monster, this)
 
         ship = this.physics.add.sprite(game.canvas.width * 0.5, game.canvas.height - 48, 'ship');
 
@@ -112,6 +125,7 @@ var play = {
         left = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT);
         right = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
 
+        speed = 0;
         shootTimer = 0;
         monsterHealth = MONSTER_HEALTH;
         playerHealth = PLAYER_HEALTH;
@@ -121,13 +135,18 @@ var play = {
 
         monsterUIHealth = this.add.graphics(0, 0);
         monsterUIHealth.fillStyle([0xFF0000]);
-        monsterUIHealth.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
+        monsterUIHealth.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT * 0.025);
 
         playerUIHealth = this.add.graphics(0, 0);
         playerUIHealth.fillStyle([0x00FF00]);
-        playerUIHealth.fillRect(0, SCENE_HEIGHT - SCENE_HEIGHT * 0.05, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
+        playerUIHealth.fillRect(0, SCENE_HEIGHT - SCENE_HEIGHT * 0.025, SCENE_WIDTH, SCENE_HEIGHT * 0.025);
 
         this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
+        this.physics.add.overlap(monster, ship, onMonsterCatch);
+
+        charging = false;
+        runningAnimation = true;
+        startAnimation(this);
 
         startSpawnBaba(this)
         startSpawnMonster(this);
@@ -136,109 +155,112 @@ var play = {
         // debug.lineStyle(5, 0xFF00FF, 1.0);
     },
     update: function (time, deltaTime) {
-        monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
-        playerUIHealth.scaleX = playerHealth / PLAYER_HEALTH;
+        if(!runningAnimation) {
+            monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
+            playerUIHealth.scaleX = playerHealth / PLAYER_HEALTH;
 
-        shootTimer = Math.max(shootTimer - deltaTime, 0);
-        if(spaceBar.isDown) {
-            if(shootTimer == 0) {
-                fireLazer(this);
-                shootTimer = SHIP_FIRERATE;
+            shootTimer = Math.max(shootTimer - deltaTime, 0);
+            if (spaceBar.isDown) {
+                if (shootTimer == 0) {
+                    fireLazer(this);
+                    shootTimer = SHIP_FIRERATE;
+                }
+            }
+            speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
+            ship.x = Math.min(Math.max(ship.x + speed, 32), SCENE_WIDTH - 32);
+
+            if(speed == 0) {
+                motorMovementSound.pause();
+                motorIdleSound.play();
+            } else {
+                motorIdleSound.pause();
+                motorMovementSound.play();
+            }
+
+            var timestamp = Date.now()
+            if (timestamp - lastMonsterHit < 300) {
+
+                monster.tint = Math.random() * 0xFFFFFF;
+
+            } else if (monster.tint != 0) {
+                monster.tint = 0xFFFFFF;
+            }
+
+            if (timestamp - lastMonsterRotation >= (2000 + 2000 * Math.random())) {
+                rotateMonster(this);
+                lastMonsterRotation = timestamp
+            }
+
+            for (var i = 0; i < playerProjectiles.children.size; i++) {
+                var lazer = playerProjectiles.children.entries[i];
+                lazer.y -= deltaTime * LAZER_SPEED;
+                if(lazer.y < -lazer.height) {
+                    destroyPlayerProjectile(lazer);
+                }
+            }
+
+            for (var i = 0; i < babaProjectiles.children.size; i++) {
+                var enemy = babaProjectiles.children.entries[i];
+                enemy.y += deltaTime * BABA_SPEED;
+            }
+
+            for (var i = 0; i < monsterMinions.children.size; i++) {
+                var enemy = monsterMinions.children.entries[i];
+                if (enemy.y < MONSTER_END_SEEK_Y) {
+                    enemy.angle = Phaser.Math.Angle.Between(ship.x, ship.y, enemy.x, enemy.y);
+                }
+                var dx = Math.cos(enemy.angle) * deltaTime * MINION_SPEED;
+                var dy = Math.sin(enemy.angle) * deltaTime * MINION_SPEED;
+                enemy.x -= dx;
+                enemy.y -= dy;
+                if(enemy.y < MONSTER_END_SEEK_Y) {
+                    enemy.angle = (enemy.angle - Math.PI * 0.5) * Phaser.Math.RAD_TO_DEG;
+                }
+                
+                if(enemy.y > SCENE_HEIGHT + enemy.height) {
+                    destroyMinion(enemy);
+                }
+            }
+
+            if(!charging) {
+                babaTimer = Math.max(babaTimer - deltaTime, 0);
+                if (babaTimer == 0) {
+                    babaTimer = getBabaSpawnTime();
+                    spawnBaba(this);
+                }
+
+                monsterTimer = Math.max(monsterTimer - deltaTime, 0);
+                if (monsterTimer == 0) {
+                    monsterTimer = getBabaSpawnTime();
+                    spawnMonster(this);
+                }
+            }
+
+            if(!minionSound.isPlaying && monsterMinions.children.size > 0) {
+                minionSound.play();
+            } else if(minionSound.isPlaying && monsterMinions.children.size == 0) {
+                minionSound.pause();
+            }
+
+            if(monsterHealth <= HEALTH_ULTIMATE && ultimateCount < ULTIMATE_MINION_COUNT) {
+                ultimateTimer = Math.min(ultimateTimer + deltaTime, ULTIMATE_DELTA);
+                if(ultimateTimer == ULTIMATE_DELTA) {
+                    spawnMonster(this);
+                    ultimateTimer = 0;
+                    ultimateCount++;
+                }
+            }
+
+            if (monsterHealth <= 0) {
+                victory = true;
+                gameOver();
+            }
+
+            if (playerHealth <= 0) {
+                victory = false;
+                gameOver();
             }
         }
-        var speed = (left.isDown ? -1 : 0 + right.isDown ? 1 : 0) * deltaTime * SHIP_SPEED;
-        ship.x = Math.min(Math.max(ship.x + speed, 32), SCENE_WIDTH - 32);
-
-        if(speed == 0) {
-            motorMovementSound.pause();
-            motorIdleSound.play();
-        } else {
-            motorIdleSound.pause();
-            motorMovementSound.play();
-        }
-
-        var timestamp = Date.now()
-        if (timestamp - lastMonsterHit < 300) {
-
-            monster.tint = Math.random() * 0xFFFFFF;
-
-        } else if (monster.tint != 0) {
-            monster.tint = 0xFFFFFF;
-        }
-
-        if (timestamp - lastMonsterRotation >= (2000 + 2000 * Math.random())) {
-            rotateMonster(this);
-            lastMonsterRotation = timestamp
-        }
-
-        for (var i = 0; i < playerProjectiles.children.size; i++) {
-            var lazer = playerProjectiles.children.entries[i];
-            lazer.y -= deltaTime * LAZER_SPEED;
-            if(lazer.y < -lazer.height) {
-                destroyPlayerProjectile(lazer);
-            }
-        }
-
-        for (var i = 0; i < babaProjectiles.children.size; i++) {
-            var enemy = babaProjectiles.children.entries[i];
-            enemy.y += deltaTime * BABA_SPEED;
-        }
-
-        for (var i = 0; i < monsterMinions.children.size; i++) {
-            var enemy = monsterMinions.children.entries[i];
-            if(enemy.y < MONSTER_END_SEEK_Y) {
-                enemy.angle = Phaser.Math.Angle.Between(ship.x, ship.y, enemy.x, enemy.y);
-            }
-            var dx = Math.cos(enemy.angle) * deltaTime * MINION_SPEED;
-            var dy = Math.sin(enemy.angle) * deltaTime * MINION_SPEED;
-            enemy.x -= dx;
-            enemy.y -= dy;
-            if(enemy.y < MONSTER_END_SEEK_Y) {
-                enemy.angle = (enemy.angle - Math.PI * 0.5) * Phaser.Math.RAD_TO_DEG;
-            }
-            
-            if(enemy.y > SCENE_HEIGHT + enemy.height) {
-                destroyMinion(enemy);
-            }
-        }
-
-        babaTimer = Math.max(babaTimer - deltaTime, 0);
-        if(babaTimer == 0) {
-            babaTimer = getBabaSpawnTime();
-            spawnBaba(this);
-        }
-
-        monsterTimer = Math.max(monsterTimer - deltaTime, 0);
-        if(monsterTimer == 0) {
-            monsterTimer = getBabaSpawnTime();
-            spawnMonster(this);
-        }
-
-        if(!minionSound.isPlaying && monsterMinions.children.size > 0) {
-            minionSound.play();
-        } else if(minionSound.isPlaying && monsterMinions.children.size == 0) {
-            minionSound.pause();
-        }
-
-        if(monsterHealth <= HEALTH_ULTIMATE && ultimateCount < ULTIMATE_MINION_COUNT) {
-            ultimateTimer = Math.min(ultimateTimer + deltaTime, ULTIMATE_DELTA);
-            if(ultimateTimer == ULTIMATE_DELTA) {
-                spawnMonster(this);
-                ultimateTimer = 0;
-                ultimateCount++;
-            }
-        }
-
-        if (monsterHealth <= 0) {
-            victory = true;
-            gameOver();
-        }
-
-        if (playerHealth <= 0) {
-            victory = false;
-            gameOver();
-        }
-
     }
 }
 
@@ -251,7 +273,7 @@ function fireLazer(context) {
 function onMonsterHit(monster, projectile) {
     monsterHealth--;
     destroyPlayerProjectile(projectile);
-    if(!monsterScreamSound.isPlaying) {
+    if (!monsterScreamSound.isPlaying) {
         monsterScreamSound.play();
     }
 }
@@ -264,11 +286,64 @@ function destroyPlayerProjectile(projectile) {
 }
 
 function onProjectileHit(enemy, projectile) {
+    lazerHitSound.play();
+
     playerProjectiles.remove(projectile);
     projectile.destroy();
 
     babaProjectiles.remove(enemy);
     enemy.destroy();
+}
+
+function moveDownMonster(monster, scene, onComplete) {
+
+    chargeHitSound.play();
+    charging = true;
+
+    scene.tweens.timeline({
+        targets: monster,
+        onComplete: onComplete,
+        tweens: [
+            {
+                ease: 'Linear',
+                duration: 500,
+                y: 0
+            },
+            {
+                duration: 700,
+                ease: 'Power2',
+                y: SCENE_HEIGHT * 0.8
+            }, {
+                duration: 1000,
+                ease: 'Linear',
+                y: monster.height / 2
+            }
+        ]
+
+    });
+
+
+}
+
+function startAnimation(scene) {
+    monster.y = MONSTER_START_Y;
+    scene.tweens.add({
+        targets: monster,
+        y: monster.height / 2,
+        duration: MONSTER_START_TIME,
+        ease: 'Linear',
+        onComplete: function () {
+            runningAnimation = false;
+            tweenMonster(monster, scene)
+        }
+    });
+    ship.y = SCENE_HEIGHT + 128;
+    scene.tweens.add({
+        targets: ship,
+        y: SCENE_HEIGHT - 48,
+        duration: MONSTER_START_TIME * 0.5,
+        ease: 'Linear'
+    });
 }
 
 function tweenMonster(monster, scene) {
@@ -288,17 +363,24 @@ function tweenMonster(monster, scene) {
         duration: time,
         ease: 'Linear',
         onComplete: function () {
-            tweenMonster(monster, scene);
+
+            if (Math.random() * 20 > 2) {
+                tweenMonster(monster, scene);
+            } else {
+                moveDownMonster(monster, scene, chargeCompleted.bind(this, scene));
+            }
         }
     });
 }
 
+function chargeCompleted(scene) {
+    charging = false;
+    tweenMonster(monster, scene);
+}
 
 function startSpawnBaba(scene) {
     babaProjectiles = scene.add.group();
     scene.physics.add.overlap(ship, babaProjectiles, onHeroHitBaba);
-
-    babaSound.play();
 
     babaTimer = getBabaSpawnTime();
 }
@@ -321,6 +403,8 @@ function getMonsterSpawnTime() {
 function spawnBaba(scene) {
     var enemy = scene.physics.add.sprite(monster.x + Math.random() * 32 - 16, monster.y + monster.height / 2, "baba");
     babaProjectiles.add(enemy);
+
+    babaSound.play();
 
     babaTimer = getBabaSpawnTime();
 }
@@ -380,10 +464,38 @@ function rotateMonster(scene) {
 
     scene.tweens.add({
         targets: monster,
-        angle: monster.angle + (Math.random() >= 0.5? -15: 15),
+        angle: monster.angle + (Math.random() >= 0.5 ? -15 : 15),
         duration: 25,
         ease: 'Linear',
         yoyo: true,
-        loop:3
+        loop: 3
     });
+}
+
+
+function onMonsterCatch(monster, ship) {
+    var time = Date.now();
+    if (time - damageTimeout > 500) {
+        playerHealth -= ENEMY_DAMAGE * 2;
+        damageTimeout = time;
+    }
+}
+
+function gameOver() {
+    motorIdleSound.stop();
+    motorMovementSound.stop();
+    mainTheme.stop();
+    chargeHitSound.stop();
+
+    monsterScreamSound.stop();
+    lazerSound.stop();
+    chargeHitSound.stop();
+    winSound.stop();
+    looseSound.stop();
+    babaSound.stop();
+    minionSound.stop();
+    lazerHitSound.stop();
+    
+    game.scene.switch("play", "gameover");
+    game.scene.stop("play");
 }

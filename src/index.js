@@ -47,7 +47,7 @@ function preload() {
     this.load.image('baba', 'assets/Baba.png');
 
     loadAudios(this, [
-        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto", "Motor movim loop", "Motor quieto"
+        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto", "Motor movim loop", "Motor quieto", "ataque carga"
     ]);
     for (var i = 1; i < 10; i++) {
         this.load.image('cloud' + i, 'assets/cloud' + i + '.png');
@@ -71,7 +71,7 @@ function create() {
     var logo = this.add.image(game.canvas.width * 0.5, -game.canvas.height * 0.5, 'logo');
     var fillText = "En el año 2420, los niveles de contaminación del riachuelo alcanzaron niveles críticos, y el gobierno del presidente Menem tercero declaró estado de emergencia regional.\n" +
     "A partir de ese día, la ciudad permaneció en cuarentena.\n" +
-    "Varias décadas más tarde, estudios científicos y expediciones al epicentro de la catástrofe probaron lo increíble. Insectos que consumían el agua contaminada a diario sufrieron cambios en su estructura y evolucionaron en monstruos hambrientos de carne humana.\n" +
+    "Varias décadas más tarde, estudios científicos y expediciones al epicentro de la catástrofe probaron lo increíble. Insectos que consumían el agua contaminada a diario sufrieron cambios en su estructura genetica y evolucionaron en monstruos hambrientos de carne humana.\n" +
     "Los únicos que pueden defendernos son del Regimiento Armado Insecticida del Delta (R.A.I.D.).\n" +
     "El futuro de la argentinidad es aún incierto...\n";
 
@@ -108,10 +108,4 @@ function changeState() {
     clearTimeout(timerId)
     game.scene.switch("load", "play");
     game.scene.stop("load");
-}
-
-function gameOver() {
-    mainTheme.stop();
-    game.scene.switch("play", "gameover");
-    game.scene.stop("play");
 }
