@@ -182,20 +182,19 @@ function addCloudsFX(scene) {
     for (var i = 1; i < 10; i++) {
         var y = (SCENE_HEIGHT / 5) * (Math.random() * 3 + 1)
 
+        //vel = 10 * distance
+        var randomOffset = 400 * Math.random()  + SCENE_WIDTH * Math.random() * 0.5;
+        var rightPos = SCENE_WIDTH + randomOffset +  i * 500;
+        var leftPos = -randomOffset  -100 - i* 500;
 
-
-        var left = SCENE_WIDTH + 400 + SCENE_WIDTH * Math.random() * 0.5;
-        var right = - 400 - SCENE_WIDTH * Math.random() * 0.5;
-
-
-        var cloud = scene.add.image(i % 2 == 1 ? left : right, y, 'cloud' + i);
-
+        var distance = Math.abs(Math.abs(rightPos) + Math.abs(leftPos));
+        var cloud = scene.add.image(i % 2 == 1 ? rightPos : leftPos, y, 'cloud' + i);
 
 
         scene.tweens.add({
             targets: cloud,
-            x: (i % 2 == 1) ? right : left,
-            duration: 15000 + 15000 * Math.random(),
+            x: (i % 2 == 1) ? leftPos : rightPos,
+            duration: 10 * distance,
             ease: 'Linear',
             yoyo: true,
             loop: -1
