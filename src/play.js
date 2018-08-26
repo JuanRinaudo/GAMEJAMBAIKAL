@@ -1,7 +1,6 @@
-var monsterSpawnerID;
 var ship;
 var playerProjectiles;
-var monsterProjectiles;
+var babaProjectiles;
 
 var playerHealth;
 var monsterHealth;
@@ -21,6 +20,8 @@ var winSound;
 var looseSound;
 
 var shootTimer;
+var babaTimer;
+
 var SHIP_FIRERATE = 250;
 var SHIP_SPEED = 0.5;
 var LAZER_SPEED = 0.6;
@@ -29,6 +30,9 @@ var MONSTER_HEALTH = 50;
 var PLAYER_HEALTH = 5;
 var LAZER_DAMAGE = 1;
 var ENEMY_DAMAGE = 1;
+
+var BABA_SPAWN_BASE_TIME = 1000;
+var BABA_SPAWN_RANDOM_TIME = 500;
 
 var play = {
     preload: function () {
@@ -90,7 +94,7 @@ var play = {
 
         this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
 
-        startSpawnMonster(this)
+        startSpawnBaba(this)
     },
     update: function (time, deltaTime) {
         monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
@@ -111,15 +115,19 @@ var play = {
             lazer.y -= deltaTime * LAZER_SPEED;
         }
 
-        for (var i = 0; i < monsterProjectiles.children.size; i++) {
-            var enemy = monsterProjectiles.children.entries[i];
+        for (var i = 0; i < babaProjectiles.children.size; i++) {
+            var enemy = babaProjectiles.children.entries[i];
             enemy.y += deltaTime * 0.75;
+        }
+
+        babaTimer = Math.max(babaTimer - deltaTime, 0);
+        if(babaTimer == 0) {
+            babaTimer = getBabaSpawnTime();
+            spawnbaba(this);
         }
 
         if (monsterHealth <= 0) {
             gameOver();
-            mainTheme.stop();
-            clearTimeout(monsterSpawnerID);
         }
 
         if (playerHealth <= 0) {
@@ -149,7 +157,7 @@ function onProjectileHit(enemy, projectile) {
     playerProjectiles.remove(projectile);
     projectile.destroy();
 
-    monsterProjectiles.remove(enemy);
+    babaProjectiles.remove(enemy);
     enemy.destroy();
 }
 
@@ -176,29 +184,31 @@ function tweenMonster(monster, scene) {
 }
 
 
-function startSpawnMonster(scene) {
-    monsterProjectiles = scene.add.group();
-    scene.physics.add.overlap(ship, monsterProjectiles, onHeroHit);
+function startSpawnBaba(scene) {
+    babaProjectiles = scene.add.group();
+    scene.physics.add.overlap(ship, babaProjectiles, onHeroHit);
 
-    spawnMonster(scene);
+    babaTimer = getBabaSpawnTime();
 }
 
-function spawnMonster(scene) {
-    if(scene.physics.add != null) {
-        var enemy = scene.physics.add.sprite(monster.x, monster.y + monster.height / 2, "monster");
-        //SCALE
-        enemy.setScale(0.2)
-        monsterProjectiles.add(enemy);
-        scene.physics.add.overlap(enemy, playerProjectiles, onProjectileHit);
-
-        monsterSpawnerID = setTimeout(spawnMonster.bind(this, scene), Math.random() * 1000 + 500);
-    }
+function getBabaSpawnTime() {
+    return Math.random() * BABA_SPAWN_RANDOM_TIME + BABA_SPAWN_BASE_TIME;
 }
 
-function onHeroHit(ship, monsterProjectile) {
-    monsterProjectiles.remove(monsterProjectile);
+function spawnbaba(scene) {
+    var enemy = scene.physics.add.sprite(monster.x + Math.random() * 32 - 16, monster.y + monster.height / 2, "baba");
+    //SCALE
+    enemy.setScale(0.75)
+    babaProjectiles.add(enemy);
+    // scene.physics.add.overlap(enemy, playerProjectiles, onProjectileHit);
 
-    monsterProjectile.destroy()
+    babaTimer = getBabaSpawnTime();
+}
+
+function onHeroHit(ship, babaProjectile) {
+    babaProjectiles.remove(babaProjectile);
+
+    babaProjectile.destroy()
     playerHealth -= ENEMY_DAMAGE;
 }
 

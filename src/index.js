@@ -35,12 +35,14 @@ game.scene.start('load');
 
 
 function preload() {
+    this.load.image('minion', 'assets/Minion.png');
     this.load.image('monster', 'assets/Monster.png');
     this.load.image('lazer', 'assets/Lazer.png');
     this.load.image('ship', 'assets/Ship.png');
+    this.load.image('baba', 'assets/Baba.png');
 
     loadAudios(this, [
-        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme"
+        "MainTheme", "Winner", "Loser", "Laser", "Explosion", "Rugido", "EnterMonster", "IntroTheme", "Ataque baba", "Ataque bichos", "Impacto"
     ]);
     for (var i = 1; i < 10; i++) {
         this.load.image('cloud' + i, 'assets/cloud' + i + '.png');
@@ -104,6 +106,7 @@ function changeState() {
 }
 
 function gameOver() {
+    mainTheme.stop();
     game.scene.switch("play", "gameover");
     game.scene.stop("play");
 }
