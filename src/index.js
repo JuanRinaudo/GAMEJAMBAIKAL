@@ -1,9 +1,11 @@
+const SCENE_WIDTH = 800;
+const SCENE_HEIGHT = 600;
 
 var config = {
     type: Phaser.AUTO,
     parent: 'phaser-example',
-    width: 800,
-    height: 600
+    width: SCENE_WIDTH,
+    height: SCENE_HEIGHT
 };
 
 var game = new Phaser.Game(config);
@@ -20,6 +22,10 @@ game.scene.start('load');
 function preload ()
 {
     this.load.image('logo', 'assets/logo.png');
+    this.load.image('monster', 'assets/Monster.png');
+    this.load.image('lazer', 'assets/Lazer.png');
+    this.load.image('ship', 'assets/Ship.png');
+
 }
 
 function create ()
