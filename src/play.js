@@ -7,6 +7,7 @@ var playerHealth;
 var monsterHealth;
 
 var monsterUIHealth;
+var playerUIHealth;
 
 var spaceBar;
 var left;
@@ -38,6 +39,10 @@ var play = {
             graphics.fillRect(x, y, w, h);
         }
         //end bg
+        addCloudsFX(this);
+
+        //add clouds
+
 
         console.log("Scene Play");
         monster = this.physics.add.sprite(SCENE_WIDTH / 2, 0, "monster");
@@ -62,12 +67,18 @@ var play = {
         monsterUIHealth.fillRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
 
 
+        playerUIHealth = this.add.graphics(0, 0);
+        playerUIHealth.fillStyle([0x00FF00]);
+        playerUIHealth.fillRect(0, SCENE_HEIGHT - SCENE_HEIGHT * 0.05, SCENE_WIDTH, SCENE_HEIGHT * 0.05);
+
+
         this.physics.add.overlap(monster, playerProjectiles, onMonsterHit);
 
         startSpawnMonster(this)
     },
     update: function (time, deltaTime) {
         monsterUIHealth.scaleX = monsterHealth / MONSTER_HEALTH;
+        playerUIHealth.scaleX = playerHealth / PLAYER_HEALTH;
 
         if (spaceBar.isDown) {
             shootTimer += deltaTime;
@@ -167,7 +178,11 @@ function onHeroHit(ship, monsterProjectile) {
     console.log("GAME OVER");
 }
 
+function addCloudsFX(scene) {
+
+
+}
 
 //TODO 
-//Player health
+//Player health bar
 //enemies spawn pattern

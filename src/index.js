@@ -37,6 +37,9 @@ function preload() {
     this.load.image('lazer', 'assets/Lazer.png');
     this.load.image('ship', 'assets/Ship.png');
 
+    for (var i = 1; i < 10; i++) {
+        this.load.image('cloud' + i, 'assets/cloud' + i + '.png');
+    }
 }
 
 function create() {
@@ -77,11 +80,11 @@ function changeState() {
 }
 
 
-function gameOver(){
+function gameOver() {
     game.scene.switch("play", "gameover");
 }
 
 
-function restartGame(){
+function restartGame() {
     game.scene.switch("gameover", "play");
 }
